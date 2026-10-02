@@ -2,19 +2,16 @@ using System.Net;
 using Foundry.Common.Models;
 using Foundry.Common.Processors;
 
-FoundryProcessor.Run<Packets, EnrichedPackets>(args, config =>
+FoundryProcessor.Run<Packets, IspEnrichment>(args, config =>
 {
     // Isp:Ranges maps CIDR ranges to ISP names; the most specific match wins.
     var ranges = config.GetSection("Isp:Ranges").Get<Dictionary<string, string>>() ?? [];
     var networks = ranges.Select(r => (Network: IPNetwork.Parse(r.Key), Isp: r.Value)).OrderByDescending(r => r.Network.PrefixLength).ToList();
 
-    return p => new EnrichedPackets
+    // Only the ISP, keyed by the packet's guid: the Join processor puts packets and enrichments together.
+    return p => new IspEnrichment
     {
         Guid = p.Guid,
-        Data = p.Data,
-        TimeSent = p.TimeSent,
-        HostIp = p.HostIp,
-        TargetIp = p.TargetIp,
         ISP = networks.FirstOrDefault(n => n.Network.Contains(p.HostIp)).Isp ?? "unknown",
     };
 });
