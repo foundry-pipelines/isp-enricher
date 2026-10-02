@@ -1,16 +1,12 @@
 {
-  "Configs": { "Repo": "https://gitlab.com/foundry-platform/common/configs.git" },
-
-  "Logging": { "LogLevel": { "Default": "Information" } },
-
-  // Where it reads and writes. Deployed in a pipeline, the pipeline's appsettings.Production.json overrides this section.
-  "Foundry": {
-    "Pipeline": "local",
-    "Processor": "Isp",
-    "Input": { "Config": "kafka/prod", "Topic": "enrichment.packets" },
-    "Output": { "Config": "kafka/prod", "Topic": "packets.enrichments" }
+  "Configs": {
+    "Repo": "https://gitlab.com/foundry-platform/common/configs.git"
   },
-
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    }
+  },
   // CIDR range -> ISP; the most specific match wins.
   "Isp": {
     "Ranges": {

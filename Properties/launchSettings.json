@@ -3,7 +3,13 @@
     "IspEnricher": {
       "commandName": "Project",
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "prod"
+      }
+    },
+    "IspEnricher (load)": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "load"
       }
     }
   }

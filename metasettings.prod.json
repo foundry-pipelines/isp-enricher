@@ -1,0 +1,13 @@
+{
+  "Foundry": {
+    "Pipeline": "local", // keeps the consumer group local.Isp from before
+    "Input": {
+      "Config": "kafka/prod",
+      "Topic": "enrichment.packets"
+    },
+    "Output": {
+      "Config": "kafka/prod",
+      "Topic": "packets.enrichments"
+    }
+  }
+}
