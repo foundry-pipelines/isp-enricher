@@ -1,17 +1,93 @@
-using System.Net;
+using Confluent.Kafka;
 using Foundry.Common.Models;
-using Foundry.Common.Processors;
+using Foundry.Common.Models.Serialization;
+using System.Net;
 
-FoundryProcessor.Run<Packets, IspEnrichment>(args, config =>
+var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddHostedService<Isp>();
+builder.Build().Run();
+
+// Packets -> IspEnrichment: the ISP of host_ip only, keyed by guid (the Join processor puts packets and enrichments together).
+// Reads Foundry:Input and writes Foundry:Output; a message it can't handle is logged and skipped.
+sealed class Isp(IConfiguration config, ILogger<Isp> log) : BackgroundService
 {
-    // Isp:Ranges maps CIDR ranges to ISP names; the most specific match wins.
-    var ranges = config.GetSection("Isp:Ranges").Get<Dictionary<string, string>>() ?? [];
-    var networks = ranges.Select(r => (Network: IPNetwork.Parse(r.Key), Isp: r.Value)).OrderByDescending(r => r.Network.PrefixLength).ToList();
+    const string SchemaHeader = "foundry-schema"; // tells apart the records of a dataset carrying several schemas
 
-    // Only the ISP, keyed by the packet's guid: the Join processor puts packets and enrichments together.
-    return p => new IspEnrichment
+    readonly List<(IPNetwork Network, string Isp)> networks = (config.GetSection("Isp:Ranges").Get<Dictionary<string, string>>() ?? [])
+        .Select(r => (IPNetwork.Parse(r.Key), r.Value)).OrderByDescending(r => r.Item1.PrefixLength).ToList();
+
+    protected override Task ExecuteAsync(CancellationToken ct) => Task.Run(() => Run(ct), ct);
+
+    async Task Run(CancellationToken ct)
+    {
+        var input = config.GetSection("Foundry:Input");
+        var output = config.GetSection("Foundry:Output");
+        using var consumer = new ConsumerBuilder<byte[], byte[]>(new ConsumerConfig(Kafka(input))
+        {
+            GroupId = $"{config["Foundry:Pipeline"]}.{config["Foundry:Processor"]}",
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            EnableAutoOffsetStore = false, // stored only after the produce succeeds
+        }).Build();
+        using var producer = new ProducerBuilder<byte[], byte[]>(new ProducerConfig(Kafka(output)) { EnableIdempotence = true }).Build();
+        consumer.Subscribe(input["Topic"]);
+        log.LogInformation("{Input} -> {Output}", input["Topic"], output["Topic"]);
+
+        while (!ct.IsCancellationRequested)
+        {
+            ConsumeResult<byte[], byte[]> result;
+            try
+            {
+                result = consumer.Consume(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (ConsumeException e) when (!e.Error.IsFatal)
+            {
+                log.LogWarning("{Reason}", e.Error.Reason); // e.g. the topic doesn't exist yet
+                await Task.Delay(TimeSpan.FromSeconds(5), ct);
+                continue;
+            }
+
+            IspEnrichment value;
+            try
+            {
+                value = Process(FoundrySerializer.Deserialize<Packets>(result.Message.Value));
+            }
+            catch (FormatException e)
+            {
+                log.LogWarning(e, "Skipping bad message at {Offset}", result.TopicPartitionOffset);
+                consumer.StoreOffset(result);
+                continue;
+            }
+            var headers = new Headers { { SchemaHeader, System.Text.Encoding.UTF8.GetBytes(IspEnrichment.SchemaName) } };
+            await producer.ProduceAsync(output["Topic"], new Message<byte[], byte[]> { Key = result.Message.Key, Value = FoundrySerializer.Serialize(value), Headers = headers }, ct);
+            consumer.StoreOffset(result);
+        }
+        consumer.Close();
+    }
+
+    IspEnrichment Process(Packets p) => new()
     {
         Guid = p.Guid,
         ISP = networks.FirstOrDefault(n => n.Network.Contains(p.HostIp)).Isp ?? "unknown",
     };
-});
+
+    // ConnectionSettings from the profile; credentials from Secrets:<SecretRef>:Username/Password (env Secrets__<ref>__Username).
+    ClientConfig Kafka(IConfigurationSection dataSet)
+    {
+        var settings = dataSet.GetSection("ConnectionSettings");
+        var client = new ClientConfig { BootstrapServers = settings["Brokers"] };
+        if (settings["SecurityProtocol"] is { Length: > 0 } protocol)
+            client.Set("security.protocol", protocol);
+        if (settings["SaslMechanism"] is { Length: > 0 } mechanism)
+            client.Set("sasl.mechanism", mechanism);
+        if (settings["SecretRef"] is { Length: > 0 } secret)
+        {
+            client.SaslUsername = config[$"Secrets:{secret}:Username"];
+            client.SaslPassword = config[$"Secrets:{secret}:Password"];
+        }
+        return client;
+    }
+}

@@ -6,17 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <!-- Local dev: writes appsettings.Development.json from the pipeline manifest (Foundry.Common.Processors build target).
-       Expects foundry-pipelines, scripts and configs cloned next to this repo. -->
-  <PropertyGroup Condition="Exists('../foundry-pipelines/PacketPipeline/PipelineManifest.yaml') and Exists('../scripts')">
-    <FoundryManifest>../foundry-pipelines/PacketPipeline/PipelineManifest.yaml</FoundryManifest>
-    <FoundryProcessor>Isp</FoundryProcessor>
-    <FoundryScripts>../scripts</FoundryScripts>
-    <FoundryConfigs Condition="Exists('../configs')">../configs</FoundryConfigs>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Foundry.Common.Processors" Version="1.*" />
+    <PackageReference Include="Confluent.Kafka" Version="2.15.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <!-- appsettings.json from config.yaml, profiles from the configs repo -->
+    <PackageReference Include="Foundry.Common.Configuration" Version="1.*" />
+    <PackageReference Include="Foundry.Common.Models" Version="1.*" />
   </ItemGroup>
 
 </Project>

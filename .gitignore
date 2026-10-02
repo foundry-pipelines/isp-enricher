@@ -3,4 +3,3 @@ obj/
 .idea/
 .vs/
 *.user
-appsettings.Development.json

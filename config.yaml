@@ -1,0 +1,23 @@
+Configs:
+  Repo: https://gitlab.com/foundry-platform/common/configs.git
+
+Logging:
+  LogLevel:
+    Default: Information
+
+# Where it reads and writes. Deployed in a pipeline, the pipeline's appsettings.Production.json overrides this section.
+Foundry:
+  Pipeline: local
+  Processor: Isp
+  Input:
+    Config: kafka/prod
+    Topic: enrichment.packets
+  Output:
+    Config: kafka/prod
+    Topic: packets.enrichments
+
+# CIDR range -> ISP; the most specific match wins.
+Isp:
+  Ranges:
+    8.8.8.0/24: Google LLC
+    1.1.1.0/24: Cloudflare, Inc.
