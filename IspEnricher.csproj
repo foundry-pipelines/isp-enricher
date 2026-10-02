@@ -6,19 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <!-- Local dev: writes appsettings.Development.json from the pipeline manifest (Foundry.Models build target).
-       Expects PacketPipeline, scripts and configs cloned next to this repo. -->
-  <PropertyGroup Condition="Exists('../PacketPipeline/PipelineManifest.yaml') and Exists('../scripts')">
-    <FoundryManifest>../PacketPipeline/PipelineManifest.yaml</FoundryManifest>
+  <!-- Local dev: writes appsettings.Development.json from the pipeline manifest (Foundry.Common.Transformers build target).
+       Expects foundry-pipelines, scripts and configs cloned next to this repo. -->
+  <PropertyGroup Condition="Exists('../foundry-pipelines/PacketPipeline/PipelineManifest.yaml') and Exists('../scripts')">
+    <FoundryManifest>../foundry-pipelines/PacketPipeline/PipelineManifest.yaml</FoundryManifest>
     <FoundryTransform>Isp</FoundryTransform>
     <FoundryScripts>../scripts</FoundryScripts>
     <FoundryConfigs Condition="Exists('../configs')">../configs</FoundryConfigs>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="2.15.1" />
-    <PackageReference Include="Foundry.Models" Version="1.*" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Foundry.Common.Transformers" Version="1.*" />
   </ItemGroup>
 
 </Project>
