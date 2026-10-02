@@ -1,8 +1,8 @@
 using System.Net;
 using Foundry.Common.Models;
-using Foundry.Common.Transformers;
+using Foundry.Common.Processors;
 
-FoundryTransform.Run<Packets, EnrichedPackets>(args, config =>
+FoundryProcessor.Run<Packets, EnrichedPackets>(args, config =>
 {
     // Isp:Ranges maps CIDR ranges to ISP names; the most specific match wins.
     var ranges = config.GetSection("Isp:Ranges").Get<Dictionary<string, string>>() ?? [];
