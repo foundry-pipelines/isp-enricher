@@ -1,0 +1,3 @@
+include:
+  - project: foundry-platform/common/scripts
+    file: ci/processor.yml
