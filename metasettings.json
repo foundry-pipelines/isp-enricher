@@ -11,7 +11,12 @@
   "Isp": {
     "Ranges": {
       "8.8.8.0/24": "Google LLC",
-      "1.1.1.0/24": "Cloudflare, Inc."
+      "2001:4860::/32": "Google LLC",
+      "1.1.1.0/24": "Cloudflare, Inc.",
+      "2606:4700::/32": "Cloudflare, Inc.",
+      "73.0.0.0/8": "Comcast Cable Communications",
+      "87.128.0.0/10": "Deutsche Telekom AG",
+      "79.176.0.0/13": "Bezeq International"
     }
   }
 }
