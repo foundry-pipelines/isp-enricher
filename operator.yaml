@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://gitlab.com/foundry-platform/common/scripts/-/jobs/artifacts/main/raw/operator.schema.json?job=schema
 name: Isp
 description: Looks up the ISP of host_ip from CIDR ranges in appsettings (the ISP only, keyed by guid).
 Runtime: dotnet
