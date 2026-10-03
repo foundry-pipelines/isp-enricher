@@ -1,4 +1,6 @@
 name: Isp
-in: Packets
-out: IspEnrichment
 description: Looks up the ISP of host_ip from CIDR ranges in appsettings (the ISP only, keyed by guid).
+Runtime: dotnet
+
+in: [Packets]
+out: [IspEnrichment]

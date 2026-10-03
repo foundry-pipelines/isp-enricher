@@ -1,6 +1,6 @@
 using Confluent.Kafka;
 using Foundry.Common.Models;
-using Foundry.Common.Models.Serialization;
+using System.Text.Json;
 using System.Net;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -11,7 +11,7 @@ builder.Build().Run();
 // Reads Foundry:Input and writes Foundry:Output; a message it can't handle is logged and skipped.
 sealed class Isp(IConfiguration config, IHostEnvironment env, ILogger<Isp> log) : BackgroundService
 {
-    const string SchemaHeader = "foundry-schema"; // tells apart the records of a dataset carrying several schemas
+    const string TypeHeader = "foundry-type"; // tells apart the records of a topic carrying several types
 
     readonly List<(IPNetwork Network, string Isp)> networks = (config.GetSection("Isp:Ranges").Get<Dictionary<string, string>>() ?? [])
         .Select(r => (IPNetwork.Parse(r.Key), r.Value)).OrderByDescending(r => r.Item1.PrefixLength).ToList();
@@ -53,7 +53,7 @@ sealed class Isp(IConfiguration config, IHostEnvironment env, ILogger<Isp> log) 
             IspEnrichment value;
             try
             {
-                value = Process(FoundrySerializer.Deserialize<Packets>(result.Message.Value));
+                value = Process(Read<Packets>(result.Message.Value));
             }
             catch (FormatException e)
             {
@@ -61,8 +61,8 @@ sealed class Isp(IConfiguration config, IHostEnvironment env, ILogger<Isp> log) 
                 consumer.StoreOffset(result);
                 continue;
             }
-            var headers = new Headers { { SchemaHeader, System.Text.Encoding.UTF8.GetBytes(IspEnrichment.SchemaName) } };
-            await producer.ProduceAsync(output["Topic"], new Message<byte[], byte[]> { Key = result.Message.Key, Value = FoundrySerializer.Serialize(value), Headers = headers }, ct);
+            var headers = new Headers { { TypeHeader, System.Text.Encoding.UTF8.GetBytes(nameof(IspEnrichment)) } };
+            await producer.ProduceAsync(output["Topic"], new Message<byte[], byte[]> { Key = result.Message.Key, Value = JsonSerializer.SerializeToUtf8Bytes(value), Headers = headers }, ct);
             consumer.StoreOffset(result);
         }
         consumer.Close();
@@ -73,6 +73,19 @@ sealed class Isp(IConfiguration config, IHostEnvironment env, ILogger<Isp> log) 
         Guid = p.Guid,
         ISP = networks.FirstOrDefault(n => n.Network.Contains(p.HostIp)).Isp ?? "unknown",
     };
+
+    // Bad JSON throws FormatException: skipped.
+    static T Read<T>(byte[] value)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<T>(value) ?? throw new FormatException("JSON null");
+        }
+        catch (JsonException e)
+        {
+            throw new FormatException(e.Message, e);
+        }
+    }
 
     // ConnectionSettings from the profile; credentials from Secrets:<SecretRef>:Username/Password (env Secrets__<ref>__Username).
     ClientConfig Kafka(IConfigurationSection dataSet)
