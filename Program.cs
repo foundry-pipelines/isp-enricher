@@ -8,7 +8,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddHostedService<Isp>();
 builder.Build().Run();
 
-// Packets -> IspEnrichment: the ISP of host_ip only, keyed by guid (the Join processor puts packets and enrichments together).
+// Packets -> IspEnrichment: the ISP of host_ip only, keyed by guid (the Join operator puts packets and enrichments together).
 // Reads Foundry:Input and writes Foundry:Output; a message it can't handle is logged and skipped.
 sealed class Isp(IConfiguration config, IHostEnvironment env, ILogger<Isp> log) : BackgroundService
 {
@@ -25,7 +25,7 @@ sealed class Isp(IConfiguration config, IHostEnvironment env, ILogger<Isp> log) 
         var output = config.GetSection("Foundry:Output");
         using var consumer = new ConsumerBuilder<byte[], byte[]>(new ConsumerConfig(Kafka(input))
         {
-            GroupId = $"{config["Foundry:Pipeline"] ?? env.EnvironmentName}.{config["Foundry:Processor"] ?? "Isp"}", // locally the environment (prod, load); deployed, the pipeline sets both
+            GroupId = $"{config["Foundry:Pipeline"] ?? env.EnvironmentName}.{config["Foundry:Operator"] ?? "Isp"}", // locally the environment (prod, load); deployed, the pipeline sets both
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoOffsetStore = false, // stored only after the produce succeeds
         }).Build();
