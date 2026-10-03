@@ -1,6 +1,6 @@
 {
   "Configs": {
-    "Repo": "https://gitlab.com/foundry-platform/common/configRegistry.git"
+    "Repo": "foundry-platform/common/configRegistry"
   },
   "Logging": {
     "LogLevel": {
