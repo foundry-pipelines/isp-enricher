@@ -69,11 +69,16 @@ sealed class Isp(IConfiguration config, IHostEnvironment env, ILogger<Isp> log) 
         consumer.Close();
     }
 
-    IspEnrichment Process(Packets p) => new()
+    // A host_ip that isn't an address throws FormatException: skipped.
+    IspEnrichment Process(Packets p)
     {
-        Guid = p.Guid,
-        ISP = networks.FirstOrDefault(n => n.Network.Contains(p.HostIp)).Isp ?? "unknown",
-    };
+        var host = IPAddress.TryParse(p.HostIp, out var ip) ? ip : throw new FormatException($"host_ip {p.HostIp}: not an IP address");
+        return new()
+        {
+            Guid = p.Guid,
+            ISP = networks.FirstOrDefault(n => n.Network.Contains(host)).Isp ?? "unknown",
+        };
+    }
 
     // Bad JSON throws FormatException: skipped.
     static T Read<T>(byte[] value)
