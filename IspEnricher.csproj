@@ -9,8 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.15.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-    <!-- appsettings.json from metasettings.json, profiles from the configs repo -->
-    <PackageReference Include="Foundry.Common.Configuration" Version="2.*" />
+    <!-- appsettings.json from metasettings.json, profiles from config-registry -->
+    <PackageReference Include="Foundry.MetaSettings" Version="2.*" />
   </ItemGroup>
 
 </Project>

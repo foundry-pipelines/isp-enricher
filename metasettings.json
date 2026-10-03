@@ -1,6 +1,6 @@
 {
   "Configs": {
-    "Repo": "foundry-platform/common/configRegistry"
+    "Repo": "foundry-platform/registries/config-registry"
   },
   "Logging": {
     "LogLevel": {

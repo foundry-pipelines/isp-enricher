@@ -1,6 +1,6 @@
 using Confluent.Kafka;
-using IspEnricher.Contracts.In;
-using IspEnricher.Types;
+using IspEnricher.Models.In;
+using IspEnricher.Models.Out;
 using System.Text.Json;
 using System.Net;
 
