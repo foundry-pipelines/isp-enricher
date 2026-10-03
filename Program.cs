@@ -1,5 +1,6 @@
 using Confluent.Kafka;
-using Foundry.Common.Models;
+using IspEnricher.Contracts.In;
+using IspEnricher.Types;
 using System.Text.Json;
 using System.Net;
 

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "foundry.common.gentypes": {
+      "version": "2.0.19",
+      "commands": ["gen-types"],
+      "rollForward": false
+    }
+  }
+}
